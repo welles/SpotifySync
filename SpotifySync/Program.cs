@@ -88,11 +88,11 @@ namespace SpotifySync
 
         private async static Task SynchronizeSongs(SimplePlaylist savedPlaylist, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
         {
-            var library = librarySongs.Select(x => x.Track).ToList();
-            var playlist = playlistSongs.ToList();
+            var libraryIds = librarySongs.Select(x => x.Track.Id).ToList();
+            var playlistIds = playlistSongs.Select(x => x.Id).ToList();
 
-            var added = library.Except(playlist).ToList();
-            var removed = playlist.Except(library).ToList();
+            var added = libraryIds.Except(playlistIds).ToList();
+            var removed = playlistIds.Except(libraryIds).ToList();
 
             Console.WriteLine($"{added.Count} songs were added.");
             Console.WriteLine($"{removed.Count} songs were removed.");
