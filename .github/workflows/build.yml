@@ -18,3 +18,9 @@ jobs:
         env:
           DOTNET_NOLOGO: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+      - name: Build SpotifySync
+        run: dotnet build .\SpotifySync\SpotifySync.csproj --configuration Release
+        env:
+          DOTNET_NOLOGO: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
