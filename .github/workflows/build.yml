@@ -24,3 +24,6 @@ jobs:
         env:
           DOTNET_NOLOGO: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+      - name: Run SpotifySync
+        run: .\SpotifySync\bin\Release\netcoreapp3.1\SpotifySync.exe
