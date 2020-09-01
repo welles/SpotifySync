@@ -15,7 +15,7 @@ namespace SpotifySync
 
         private const string SpotifyClientIdName = "SPOTIFY_CLIENT_ID";
 
-        private const string GitHubTokenName = "GITHUB_TOKEN";
+        private const string GitHubTokenName = "GH_TOKEN";
 
         private const string GitHubRepositoryName = "GITHUB_REPOSITORY";
 
@@ -41,7 +41,7 @@ namespace SpotifySync
 
             if (string.IsNullOrWhiteSpace(Program.GitHubToken))
             {
-                throw new InvalidOperationException("GITHUB_TOKEN environment variable is null or empty.");
+                throw new InvalidOperationException("GH_TOKEN environment variable is null or empty.");
             }
 
             if (string.IsNullOrWhiteSpace(Program.GitHubRepository))
