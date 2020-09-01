@@ -64,9 +64,9 @@ namespace SpotifySync
 
             Console.WriteLine($"Authentication successful. ({me.DisplayName})");
 
-            var savedSongs = await spotify.PaginateAll(await spotify.Library.GetTracks().ConfigureAwait(false));
+            // var savedSongs = await spotify.PaginateAll(await spotify.Library.GetTracks().ConfigureAwait(false));
 
-            Console.WriteLine($"There are {savedSongs.Count} in the library.");
+            // Console.WriteLine($"There are {savedSongs.Count} in the library.");
         }
 
         private static PKCETokenResponse GetToken()
