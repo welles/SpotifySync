@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -64,10 +65,30 @@ namespace SpotifySync
 
             Console.WriteLine($"Authentication successful. ({me.DisplayName})");
 
-            // var savedSongs = await spotify.PaginateAll(await spotify.Library.GetTracks().ConfigureAwait(false));
+            var librarySongsTask = spotify.PaginateAll(await spotify.Library.GetTracks());
 
-            // Console.WriteLine($"There are {savedSongs.Count} in the library.");
+            var savedPlaylist = (await spotify.PaginateAll(await spotify.Playlists.CurrentUsers())).SingleOrDefault(x => x.Name == "SAVED");
+
+            if (savedPlaylist == null)
+            {
+                throw new InvalidOperationException("Playlist SAVED not found.");
+            }
+
+            var playlistItems = await spotify.PaginateAll(await spotify.Playlists.GetItems(savedPlaylist.Id));
+            var playlistSongs = playlistItems.Select(x => x.Track).Cast<FullTrack>().ToList();
+
+            var librarySongs = await librarySongsTask;
+
+            Console.WriteLine($"There are {librarySongs.Count} in the library.");
+            Console.WriteLine($"There are {playlistSongs.Count} in the playlist.");
+
+            //await Program.SynchronizeSongs(savedPlaylist, librarySongs, playlistSongs);
         }
+
+        // private async static Task SynchronizeSongs(SimplePlaylist savedPlaylist, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
+        // {
+        //
+        // }
 
         private static PKCETokenResponse GetToken()
         {
