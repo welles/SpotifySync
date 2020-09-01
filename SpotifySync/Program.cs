@@ -83,10 +83,10 @@ namespace SpotifySync
             Console.WriteLine($"There are {librarySongs.Count} songs in the library.");
             Console.WriteLine($"There are {playlistSongs.Count} songs in the playlist.");
 
-            await Program.SynchronizeSongs(savedPlaylist, librarySongs, playlistSongs);
+            await Program.SynchronizeSongs(spotify, savedPlaylist, librarySongs, playlistSongs);
         }
 
-        private async static Task SynchronizeSongs(SimplePlaylist savedPlaylist, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
+        private async static Task SynchronizeSongs(SpotifyClient spotify, SimplePlaylist savedPlaylist, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
         {
             var libraryIds = librarySongs.Select(x => x.Track.Id).ToList();
             var playlistIds = playlistSongs.Select(x => x.Id).ToList();
@@ -94,14 +94,22 @@ namespace SpotifySync
             var added = libraryIds.Except(playlistIds).ToList();
             var removed = playlistIds.Except(libraryIds).ToList();
 
-            Console.WriteLine($"{added.Count} songs were added.");
-            Console.WriteLine($"{removed.Count} songs were removed.");
+            Console.WriteLine($"{added.Count} songs were added since last run.");
+            Console.WriteLine($"{removed.Count} songs were removed since last run.");
 
             var addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).OrderBy(x => x.AddedAt).ToList();
             var removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
 
-            Console.WriteLine($"Oldest: {addedSongs.First().AddedAt:s}");
-            Console.WriteLine($"Latest: {addedSongs.Last().AddedAt:s}");
+            for (var index = 0; index < addedSongs.Count; index += 100)
+            {
+                var tracks = addedSongs.Skip(index).Take(100).ToList();
+
+                var uris = tracks.Select(x => x.Track.Uri).ToList();
+
+                await spotify.Playlists.AddItems(savedPlaylist.Id, new PlaylistAddItemsRequest(uris));
+
+                Console.WriteLine($"Added {tracks.Count} to playlist.");
+            }
         }
 
         private static PKCETokenResponse GetToken()
