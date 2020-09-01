@@ -80,8 +80,8 @@ namespace SpotifySync
 
             var librarySongs = await librarySongsTask;
 
-            Console.WriteLine($"There are {librarySongs.Count} in the library.");
-            Console.WriteLine($"There are {playlistSongs.Count} in the playlist.");
+            Console.WriteLine($"There are {librarySongs.Count} songs in the library.");
+            Console.WriteLine($"There are {playlistSongs.Count} songs in the playlist.");
 
             await Program.SynchronizeSongs(savedPlaylist, librarySongs, playlistSongs);
         }
@@ -96,6 +96,12 @@ namespace SpotifySync
 
             Console.WriteLine($"{added.Count} songs were added.");
             Console.WriteLine($"{removed.Count} songs were removed.");
+
+            var addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).ToList();
+            var removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
+
+            Console.WriteLine($"Oldest: {addedSongs.First().AddedAt:s}");
+            Console.WriteLine($"Latest: {addedSongs.Last().AddedAt:s}");
         }
 
         private static PKCETokenResponse GetToken()
