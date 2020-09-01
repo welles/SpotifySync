@@ -56,13 +56,17 @@ namespace SpotifySync
             var authenticator = new PKCEAuthenticator(Program.SpotifyClientId, token);
             authenticator.TokenRefreshed += async (sender, newToken) => await Program.UpdateSecret(publicKey, newToken);
 
-            var config = SpotifyClientConfig.CreateDefault()
-                .WithAuthenticator(authenticator);
+            var config = SpotifyClientConfig.CreateDefault().WithAuthenticator(authenticator);
 
             var spotify = new SpotifyClient(config);
 
             var me = await spotify.UserProfile.Current();
+
             Console.WriteLine($"Authentication successful. ({me.DisplayName})");
+
+            var savedSongs = await spotify.PaginateAll(await spotify.Library.GetTracks().ConfigureAwait(false));
+
+            Console.WriteLine($"There are {savedSongs.Count} in the library.");
         }
 
         private static PKCETokenResponse GetToken()
