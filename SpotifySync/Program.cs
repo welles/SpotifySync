@@ -97,7 +97,7 @@ namespace SpotifySync
             Console.WriteLine($"{added.Count} songs were added.");
             Console.WriteLine($"{removed.Count} songs were removed.");
 
-            var addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).ToList();
+            var addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).OrderBy(x => x.AddedAt).ToList();
             var removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
 
             Console.WriteLine($"Oldest: {addedSongs.First().AddedAt:s}");
