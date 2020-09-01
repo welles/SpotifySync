@@ -29,3 +29,4 @@ jobs:
         run: .\SpotifySync\bin\Release\netcoreapp3.1\SpotifySync.exe
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_TOKEN: ${{ secrets.SPOTIFY_TOKEN }}
