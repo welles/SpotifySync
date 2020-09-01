@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -82,13 +83,20 @@ namespace SpotifySync
             Console.WriteLine($"There are {librarySongs.Count} in the library.");
             Console.WriteLine($"There are {playlistSongs.Count} in the playlist.");
 
-            //await Program.SynchronizeSongs(savedPlaylist, librarySongs, playlistSongs);
+            await Program.SynchronizeSongs(savedPlaylist, librarySongs, playlistSongs);
         }
 
-        // private async static Task SynchronizeSongs(SimplePlaylist savedPlaylist, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
-        // {
-        //
-        // }
+        private async static Task SynchronizeSongs(SimplePlaylist savedPlaylist, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
+        {
+            var libraryIds = librarySongs.Select(x => x.Track.Id).ToList();
+            var playlistIds = playlistSongs.Select(x => x.Id).ToList();
+
+            var added = libraryIds.Except(playlistIds).ToList();
+            var removed = playlistIds.Except(libraryIds).ToList();
+
+            Console.WriteLine($"{added.Count} songs were added.");
+            Console.WriteLine($"{removed.Count} songs were removed.");
+        }
 
         private static PKCETokenResponse GetToken()
         {
