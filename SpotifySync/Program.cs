@@ -81,6 +81,7 @@ namespace SpotifySync
             var playlistSongs = playlistItems.Select(x => x.Track).Cast<FullTrack>().ToList();
 
             var librarySongs = await librarySongsTask;
+            librarySongs.Reverse();
 
             Console.WriteLine($"There are {librarySongs.Count} songs in the library.");
             Console.WriteLine($"There are {playlistSongs.Count} songs in the playlist.");
@@ -122,7 +123,7 @@ namespace SpotifySync
             Console.WriteLine($"{added.Count} songs were added since last run.");
             Console.WriteLine($"{removed.Count} songs were removed since last run.");
 
-            var addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).OrderBy(x => x.AddedAt).ToList();
+            var addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).ToList();
             var removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
 
             for (var index = 0; index < addedSongs.Count; index += 100)
