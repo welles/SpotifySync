@@ -176,7 +176,7 @@ namespace SpotifySync
 
             var valueRange = new ValueRange {Values = rows };
 
-            var update = serviceValues.Update(valueRange, Program.GoogleSheetId, "Current!A2:Z10000");
+            var update = serviceValues.Update(valueRange, Program.GoogleSheetId, "Current!A:E");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
             var response = await update.ExecuteAsync();
@@ -200,7 +200,7 @@ namespace SpotifySync
 
             var addedValueRange = new ValueRange {Values = addedRows };
 
-            var update = serviceValues.Append(addedValueRange, Program.GoogleSheetId, "Log!A2:Z10000");
+            var update = serviceValues.Append(addedValueRange, Program.GoogleSheetId, "Log!A:F");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
             var addedRsponse = await update.ExecuteAsync();
@@ -224,7 +224,7 @@ namespace SpotifySync
 
             var removedValueRange = new ValueRange {Values = removedRows };
 
-            var update = serviceValues.Append(removedValueRange, Program.GoogleSheetId, "Log!A2:Z10000");
+            var update = serviceValues.Append(removedValueRange, Program.GoogleSheetId, "Log!A:F");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
             var response = await update.ExecuteAsync();
