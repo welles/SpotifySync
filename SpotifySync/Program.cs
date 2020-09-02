@@ -156,7 +156,7 @@ namespace SpotifySync
 
             var serviceValues = service.Spreadsheets.Values;
 
-            var rows = librarySongs.Select(song => new[] {song.Track.Id, song.Track.Name, song.Track.Artists.First().Name, song.Track.Album.Name}).ToArray();
+            var rows = librarySongs.Select(song => new[] {$"=IMAGE(\"{song.Track.Album.Images.OrderByDescending(x => x.Height).First().Url}\")", song.Track.Id, song.Track.Name, song.Track.Artists.First().Name, song.Track.Album.Name}).ToArray();
 
             var valueRange = new ValueRange {Values = rows };
 
