@@ -154,19 +154,88 @@ namespace SpotifySync
         {
             var service = Program.CreateSheetsService();
 
+            await Program.UpdateCurrentSheet(librarySongs, service);
+
+            await Program.AppendAddedLog(addedSongs, service);
+
+            await Program.AppendRemovedLog(removedSongs, service);
+        }
+
+        private static async Task UpdateCurrentSheet(IList<SavedTrack> librarySongs, SheetsService service)
+        {
             var serviceValues = service.Spreadsheets.Values;
 
-            var rows = librarySongs.Select(song => new[] {$"=IMAGE(\"{song.Track.Album.Images.OrderByDescending(x => x.Height).First().Url}\")", song.Track.Id, song.Track.Name, song.Track.Artists.First().Name, song.Track.Album.Name}).ToArray();
+            var rows = librarySongs.Select(song => new[]
+            {
+                $"=IMAGE(\"{song.Track.Album.Images.OrderByDescending(x => x.Height).First().Url}\")",
+                song.Track.Name,
+                song.Track.Artists.First().Name,
+                song.Track.Album.Name,
+                song.Track.Id,
+                song.Track.Uri,
+                song.Track.Href
+            }).ToArray();
 
             var valueRange = new ValueRange {Values = rows };
 
-            var update = serviceValues.Update(valueRange, Program.GoogleSheetId, "Current!A:Z");
-
+            var update = serviceValues.Update(valueRange, Program.GoogleSheetId, "Current!A2:Z10000");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
             var response = await update.ExecuteAsync();
 
             Console.WriteLine($"Saved current songs list to Google Sheet.");
+        }
+
+        private static async Task AppendAddedLog(IList<SavedTrack> addedSongs, SheetsService service)
+        {
+            var serviceValues = service.Spreadsheets.Values;
+
+            var addedRows = addedSongs.Select(song => new[]
+            {
+                "Added",
+                $"=IMAGE(\"{song.Track.Album.Images.OrderByDescending(x => x.Height).First().Url}\")",
+                song.Track.Name,
+                song.Track.Artists.First().Name,
+                song.Track.Album.Name,
+                song.Track.Id,
+                song.Track.Uri,
+                song.Track.Href
+            }).ToArray();
+
+            var addedValueRange = new ValueRange {Values = addedRows };
+
+            var update = serviceValues.Append(addedValueRange, Program.GoogleSheetId, "Log!A2:Z10000");
+            update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
+
+            var addedRsponse = await update.ExecuteAsync();
+
+            Console.WriteLine($"Saved added songs to Google Sheet.");
+        }
+
+        private static async Task AppendRemovedLog(IList<FullTrack> removedSongs, SheetsService service)
+        {
+            var serviceValues = service.Spreadsheets.Values;
+
+            var removedRows = removedSongs.Select(song => new[]
+            {
+                "Removed",
+                $"=IMAGE(\"{song.Album.Images.OrderByDescending(x => x.Height).First().Url}\")",
+                song.Name,
+                song.Artists.First().Name,
+                song.Album.Name,
+                song.Id,
+                song.Uri,
+                song.Href
+            }).ToArray();
+
+            var removedValueRange = new ValueRange {Values = removedRows };
+
+            var update = serviceValues.Append(removedValueRange, Program.GoogleSheetId, "Log!A2:Z10000");
+            update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
+
+            var response = await update.ExecuteAsync();
+
+            Console.WriteLine($"Saved removed songs to Google Sheet.");
         }
 
         private static SheetsService CreateSheetsService()
