@@ -100,16 +100,36 @@ namespace SpotifySync
             var addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).OrderBy(x => x.AddedAt).ToList();
             var removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
 
-            for (var index = 0; index < addedSongs.Count; index += 100)
+            foreach (var song in addedSongs)
             {
-                var tracks = addedSongs.Skip(index).Take(100).ToList();
-
-                var uris = tracks.Select(x => x.Track.Uri).ToList();
+                var uris = new[] {song.Track.Uri}.ToList();
 
                 await spotify.Playlists.AddItems(savedPlaylist.Id, new PlaylistAddItemsRequest(uris));
 
-                Console.WriteLine($"Added {tracks.Count} to playlist.");
+                await Task.Delay(100);
             }
+
+            // for (var index = 0; index < addedSongs.Count; index += 100)
+            // {
+            //     var tracks = addedSongs.Skip(index).Take(100).ToList();
+            //
+            //     var uris = tracks.Select(x => x.Track.Uri).ToList();
+            //
+            //     await spotify.Playlists.AddItems(savedPlaylist.Id, new PlaylistAddItemsRequest(uris));
+            //
+            //     Console.WriteLine($"Added {tracks.Count} to playlist.");
+            // }
+            //
+            // for (var index = 0; index < removedSongs.Count; index += 100)
+            // {
+            //     var tracks = removedSongs.Skip(index).Take(100).ToList();
+            //
+            //     var uris = tracks.Select(x => new PlaylistRemoveItemsRequest.Item {Uri = x.Uri}).ToList();
+            //
+            //     await spotify.Playlists.RemoveItems(savedPlaylist.Id, new PlaylistRemoveItemsRequest {Tracks = uris});
+            //
+            //     Console.WriteLine($"Removed {tracks.Count} from playlist.");
+            // }
         }
 
         private static PKCETokenResponse GetToken()
