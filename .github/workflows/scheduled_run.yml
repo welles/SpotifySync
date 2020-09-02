@@ -1,4 +1,4 @@
-﻿name: Scheduled Run
+name: Scheduled Run
 
 on:
   schedule:
