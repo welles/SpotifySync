@@ -160,7 +160,7 @@ namespace SpotifySync
 
             var valueRange = new ValueRange {Values = rows };
 
-            var update = serviceValues.Update(valueRange, Program.GoogleSheetId, "Current!A:D");
+            var update = serviceValues.Update(valueRange, Program.GoogleSheetId, "Current!A:Z");
 
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
 
