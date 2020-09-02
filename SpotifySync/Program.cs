@@ -21,6 +21,11 @@ namespace SpotifySync
 
         private const string GitHubRepositoryName = "GITHUB_REPOSITORY";
 
+        private const string GoogleTokenName = "GOOGLE_TOKEN";
+
+        private const string GoogleSheetIdName = "GOOGLE_SHEET_ID";
+
+
         private static readonly string SpotifyClientId = Environment.GetEnvironmentVariable(Program.SpotifyClientIdName);
 
         private static readonly string SpotifyToken = Environment.GetEnvironmentVariable(Program.SpotifyTokenName);
@@ -29,27 +34,19 @@ namespace SpotifySync
 
         private static readonly string GitHubRepository = Environment.GetEnvironmentVariable(Program.GitHubRepositoryName);
 
+        private static readonly string GoogleToken = Environment.GetEnvironmentVariable(Program.GoogleTokenName);
+
+        private static readonly string GoogleSheetId = Environment.GetEnvironmentVariable(Program.GoogleSheetIdName);
+
         public static async Task Main()
         {
-            if (string.IsNullOrWhiteSpace(Program.SpotifyToken))
-            {
-                throw new InvalidOperationException("SPOTIFY_TOKEN environment variable is null or empty.");
-            }
-
-            if (string.IsNullOrWhiteSpace(Program.SpotifyClientId))
-            {
-                throw new InvalidOperationException("SPOTIFY_CLIENT_ID environment variable is null or empty.");
-            }
-
-            if (string.IsNullOrWhiteSpace(Program.GitHubToken))
-            {
-                throw new InvalidOperationException("GH_TOKEN environment variable is null or empty.");
-            }
-
-            if (string.IsNullOrWhiteSpace(Program.GitHubRepository))
-            {
-                throw new InvalidOperationException("GITHUB_REPOSITORY environment variable is null or empty.");
-            }
+            Program.CheckEnvVariable(Program.SpotifyToken, Program.SpotifyTokenName);
+            Program.CheckEnvVariable(Program.SpotifyClientId, Program.SpotifyClientIdName);
+            Program.CheckEnvVariable(Program.GitHubToken, Program.GitHubTokenName);
+            Program.CheckEnvVariable(Program.SpotifyToken, Program.SpotifyTokenName);
+            Program.CheckEnvVariable(Program.GitHubRepository, Program.GitHubRepositoryName);
+            Program.CheckEnvVariable(Program.GoogleToken, Program.GoogleTokenName);
+            Program.CheckEnvVariable(Program.GoogleSheetId, Program.GoogleSheetIdName);
 
             var publicKey = await Program.GetPublicKey();
 
@@ -84,6 +81,14 @@ namespace SpotifySync
             Console.WriteLine($"There are {playlistSongs.Count} songs in the playlist.");
 
             await Program.SynchronizeSongs(spotify, savedPlaylist, librarySongs, playlistSongs);
+        }
+
+        private static void CheckEnvVariable(string variable, string variableName)
+        {
+            if (string.IsNullOrWhiteSpace(variable))
+            {
+                throw new InvalidOperationException($"{variableName} environment variable is null or empty.");
+            }
         }
 
         private static async Task SynchronizeSongs(SpotifyClient spotify, SimplePlaylist savedPlaylist, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
