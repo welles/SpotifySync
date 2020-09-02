@@ -165,6 +165,10 @@ namespace SpotifySync
         {
             var serviceValues = service.Spreadsheets.Values;
 
+            var clear = serviceValues.Clear(new ClearValuesRequest(), Program.GoogleSheetId, "Current!A:E");
+
+            await clear.ExecuteAsync();
+
             var rows = librarySongs.Select(song => new[]
             {
                 $"=IMAGE(\"{song.Track.Album.Images.OrderByDescending(x => x.Height).First().Url}\")",
@@ -179,7 +183,7 @@ namespace SpotifySync
             var update = serviceValues.Update(valueRange, Program.GoogleSheetId, "Current!A:E");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
-            var response = await update.ExecuteAsync();
+            await update.ExecuteAsync();
 
             Console.WriteLine($"Saved current songs list to Google Sheet.");
         }
@@ -203,7 +207,7 @@ namespace SpotifySync
             var update = serviceValues.Append(addedValueRange, Program.GoogleSheetId, "Log!A:F");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
-            var addedRsponse = await update.ExecuteAsync();
+            await update.ExecuteAsync();
 
             Console.WriteLine($"Saved added songs to Google Sheet.");
         }
@@ -227,7 +231,7 @@ namespace SpotifySync
             var update = serviceValues.Append(removedValueRange, Program.GoogleSheetId, "Log!A:F");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
-            var response = await update.ExecuteAsync();
+            await update.ExecuteAsync();
 
             Console.WriteLine($"Saved removed songs to Google Sheet.");
         }
