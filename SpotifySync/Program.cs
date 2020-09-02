@@ -97,7 +97,7 @@ namespace SpotifySync
             {
                 items.Add(item);
 
-                await Task.Delay(100);
+                await Task.Delay(10);
             }
 
             return items;
