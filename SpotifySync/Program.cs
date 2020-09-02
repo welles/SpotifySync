@@ -63,16 +63,16 @@ namespace SpotifySync
 
             Console.WriteLine($"Authentication successful. ({me.DisplayName})");
 
-            var librarySongsTask = spotify.PaginateAll(await spotify.Library.GetTracks());
+            var librarySongsTask = (await spotify.Library.GetTracks()).Paginate(spotify);
 
-            var savedPlaylist = (await spotify.PaginateAll(await spotify.Playlists.CurrentUsers())).SingleOrDefault(x => x.Name == "SAVED" && x.Owner.Id == me.Id);
+            var savedPlaylist = (await (await spotify.Playlists.CurrentUsers()).Paginate(spotify)).SingleOrDefault(x => x.Name == "SAVED" && x.Owner.Id == me.Id);
 
             if (savedPlaylist == null)
             {
                 throw new InvalidOperationException("Playlist SAVED not found.");
             }
 
-            var playlistItems = await spotify.PaginateAll(await spotify.Playlists.GetItems(savedPlaylist.Id));
+            var playlistItems = await (await spotify.Playlists.GetItems(savedPlaylist.Id)).Paginate(spotify);
             var playlistSongs = playlistItems.Select(x => x.Track).Cast<FullTrack>().ToList();
 
             var librarySongs = await librarySongsTask;
@@ -81,6 +81,21 @@ namespace SpotifySync
             Console.WriteLine($"There are {playlistSongs.Count} songs in the playlist.");
 
             await Program.SynchronizeSongs(spotify, savedPlaylist, librarySongs, playlistSongs);
+        }
+
+        private static async Task<List<T>> Paginate<T>(this IPaginatable<T> pages, ISpotifyClient spotify)
+            where T : class
+        {
+            var items = new List<T>();
+
+            await foreach(var item in spotify.Paginate(pages))
+            {
+                items.Add(item);
+
+                await Task.Delay(100);
+            }
+
+            return items;
         }
 
         private static void CheckEnvVariable(string variable, string variableName)
