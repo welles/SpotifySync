@@ -171,9 +171,7 @@ namespace SpotifySync
                 song.Track.Name,
                 song.Track.Artists.First().Name,
                 song.Track.Album.Name,
-                song.Track.Id,
-                song.Track.Uri,
-                song.Track.Href
+                song.Track.Id
             }).ToArray();
 
             var valueRange = new ValueRange {Values = rows };
@@ -197,9 +195,7 @@ namespace SpotifySync
                 song.Track.Name,
                 song.Track.Artists.First().Name,
                 song.Track.Album.Name,
-                song.Track.Id,
-                song.Track.Uri,
-                song.Track.Href
+                song.Track.Id
             }).ToArray();
 
             var addedValueRange = new ValueRange {Values = addedRows };
@@ -223,9 +219,7 @@ namespace SpotifySync
                 song.Name,
                 song.Artists.First().Name,
                 song.Album.Name,
-                song.Id,
-                song.Uri,
-                song.Href
+                song.Id
             }).ToArray();
 
             var removedValueRange = new ValueRange {Values = removedRows };
