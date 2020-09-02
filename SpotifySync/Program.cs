@@ -128,7 +128,7 @@ namespace SpotifySync
 
                 await spotify.Playlists.AddItems(savedPlaylist.Id, new PlaylistAddItemsRequest(uris));
 
-                Console.WriteLine($"Added {tracks.Count} to playlist.");
+                Console.WriteLine($"Added {tracks.Count} songs to playlist.");
             }
 
             for (var index = 0; index < removedSongs.Count; index += 100)
@@ -139,7 +139,7 @@ namespace SpotifySync
 
                 await spotify.Playlists.RemoveItems(savedPlaylist.Id, new PlaylistRemoveItemsRequest {Tracks = uris});
 
-                Console.WriteLine($"Removed {tracks.Count} from playlist.");
+                Console.WriteLine($"Removed {tracks.Count} songs from playlist.");
             }
         }
 
