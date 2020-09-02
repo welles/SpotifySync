@@ -68,7 +68,7 @@ namespace SpotifySync
 
             var librarySongsTask = spotify.PaginateAll(await spotify.Library.GetTracks());
 
-            var savedPlaylist = (await spotify.PaginateAll(await spotify.Playlists.CurrentUsers())).SingleOrDefault(x => x.Name == "SAVED");
+            var savedPlaylist = (await spotify.PaginateAll(await spotify.Playlists.CurrentUsers())).SingleOrDefault(x => x.Name == "SAVED" && x.Owner.Id == me.Id);
 
             if (savedPlaylist == null)
             {
