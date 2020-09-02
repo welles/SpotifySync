@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Sheets.v4;
+using Google.Apis.Sheets.v4.Data;
 using Newtonsoft.Json;
 using SpotifyAPI.Web;
 using SpotifySync.Models;
@@ -141,6 +146,50 @@ namespace SpotifySync
 
                 Console.WriteLine($"Removed {tracks.Count} songs from playlist.");
             }
+
+            await Program.LogChanges(librarySongs, addedSongs, removedSongs);
+        }
+
+        private static async Task LogChanges(IList<SavedTrack> librarySongs, IList<SavedTrack> addedSongs, IList<FullTrack> removedSongs)
+        {
+            var service = Program.CreateSheetsService();
+
+            var serviceValues = service.Spreadsheets.Values;
+
+            var rows = librarySongs.Select(song => new[] {song.Track.Id, song.Track.Name, song.Track.Artists.First().Name, song.Track.Album.Name}).ToArray();
+
+            var valueRange = new ValueRange {Values = rows };
+
+            var update = serviceValues.Update(valueRange, Program.GoogleSheetId, "Current!A:D");
+
+            update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
+
+            var response = await update.ExecuteAsync();
+
+            Console.WriteLine($"Saved current songs list to Google Sheet.");
+        }
+
+        private static SheetsService CreateSheetsService()
+        {
+            using (var stream = Program.GoogleToken.ToStream())
+            {
+                var serviceInitializer = new BaseClientService.Initializer
+                {
+                    HttpClientInitializer = GoogleCredential.FromStream(stream).CreateScoped(SheetsService.Scope.Spreadsheets)
+                };
+
+                return new SheetsService(serviceInitializer);
+            }
+        }
+
+        private static Stream ToStream(this string s)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
         }
 
         private static PKCETokenResponse GetToken()
