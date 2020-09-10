@@ -2,7 +2,7 @@ name: Scheduled Run
 
 on:
   schedule:
-    - cron:  '0,15,30,45 * * * *'
+    - cron:  '0 0 31 2 *'
 
 jobs:
   scheduled_run:
