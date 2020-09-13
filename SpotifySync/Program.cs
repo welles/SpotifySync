@@ -276,6 +276,8 @@ namespace SpotifySync
 
         private static async Task AppendAddedLog(SheetsService sheetsService, List<SavedTrack> addedSongs, string googleSheetId)
         {
+            if (!addedSongs.Any()) { return; }
+
             var serviceValues = sheetsService.Spreadsheets.Values;
 
             var addedRows = addedSongs.Select(song => new[]
@@ -298,6 +300,8 @@ namespace SpotifySync
 
         private static async Task AppendRemovedLog(SheetsService sheetsService, List<FullTrack> removedSongs, string googleSheetId)
         {
+            if (!removedSongs.Any()) { return; }
+
             var serviceValues = sheetsService.Spreadsheets.Values;
 
             var removedRows = removedSongs.Select(song => new[]
