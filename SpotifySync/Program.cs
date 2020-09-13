@@ -119,7 +119,7 @@ namespace SpotifySync
             {
                 items.Add(item);
 
-                await Task.Delay(10);
+                // await Task.Delay(10);
             }
 
             return items;
@@ -135,7 +135,7 @@ namespace SpotifySync
             {
                 items.Add((FullTrack) item.Track);
 
-                await Task.Delay(10);
+                // await Task.Delay(10);
             }
 
             return items;
