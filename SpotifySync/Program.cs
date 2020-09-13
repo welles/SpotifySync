@@ -32,13 +32,13 @@ namespace SpotifySync
 
             Console.Write("Loading Spotify token... ");
 
-            var spotifyToken = await Program.GetSpotifyToken(spotifyClientId, spotifyClientSecret, spotifyRefreshToken);
+            var spotifyToken = await Program.GetSpotifyToken(spotifyClientId, spotifyClientSecret, spotifyRefreshToken).ConfigureAwait(false);
 
             Console.WriteLine("[Ok]");
 
             Console.Write("Authenticating with Spotify... ");
 
-            var spotifyClient = await Program.GetSpotifyClient(spotifyToken);
+            var spotifyClient = await Program.GetSpotifyClient(spotifyToken).ConfigureAwait(false);
 
             Console.WriteLine("[Ok]");
 
@@ -50,13 +50,13 @@ namespace SpotifySync
 
             Console.Write("Loading library songs list... ");
 
-            var librarySongs = await Program.GetLibrarySongs(spotifyClient);
+            var librarySongs = await Program.GetLibrarySongs(spotifyClient).ConfigureAwait(false);
 
             Console.WriteLine($"[Ok: {librarySongs.Count} songs]");
 
             Console.Write("Loading playlist songs list... ");
 
-            var playlistSongs = await Program.GetPlaylistSongs(spotifyClient, spotifyPlaylistId);
+            var playlistSongs = await Program.GetPlaylistSongs(spotifyClient, spotifyPlaylistId).ConfigureAwait(false);
 
             Console.WriteLine($"[Ok: {playlistSongs.Count} songs]");
 
@@ -68,25 +68,25 @@ namespace SpotifySync
 
             Console.Write("Synchronizing library and playlist... ");
 
-            await Program.SynchronizePlaylist(spotifyClient, spotifyPlaylistId, addedSongs, removedSongs);
+            await Program.SynchronizePlaylist(spotifyClient, spotifyPlaylistId, addedSongs, removedSongs).ConfigureAwait(false);
 
             Console.WriteLine("[Ok]");
 
             Console.Write("Write added songs to spreadsheet... ");
 
-            await Program.AppendAddedLog(sheetsService, addedSongs, googleSheetId);
+            await Program.AppendAddedLog(sheetsService, addedSongs, googleSheetId).ConfigureAwait(false);
 
             Console.WriteLine("[Ok]");
 
             Console.Write("Write removed songs to spreadsheet... ");
 
-            await Program.AppendRemovedLog(sheetsService, removedSongs, googleSheetId);
+            await Program.AppendRemovedLog(sheetsService, removedSongs, googleSheetId).ConfigureAwait(false);
 
             Console.WriteLine("[Ok]");
 
             Console.Write("Write all saved songs to spreadsheet... ");
 
-            await Program.UpdateCurrentSheet(sheetsService, librarySongs, googleSheetId);
+            await Program.UpdateCurrentSheet(sheetsService, librarySongs, googleSheetId).ConfigureAwait(false);
 
             Console.WriteLine("[Ok]");
         }
@@ -110,11 +110,11 @@ namespace SpotifySync
 
                 request.Content = new FormUrlEncodedContent(body);
 
-                var response = await client.SendAsync(request);
+                var response = await client.SendAsync(request).ConfigureAwait(false);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
+                    var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                     var token = JObject.Parse(content).Value<string>("access_token");
 
@@ -143,7 +143,7 @@ namespace SpotifySync
 
             var spotify = new SpotifyClient(config);
 
-            var me = await spotify.UserProfile.Current();
+            var me = await spotify.UserProfile.Current().ConfigureAwait(false);
 
             if (string.IsNullOrWhiteSpace(me.Id))
             {
@@ -155,15 +155,15 @@ namespace SpotifySync
 
         private static async Task<List<SavedTrack>> GetLibrarySongs(SpotifyClient spotifyClient)
         {
-            var librarySongsRequest = await spotifyClient.Library.GetTracks();
+            var librarySongsRequest = await spotifyClient.Library.GetTracks().ConfigureAwait(false);
 
             var items = new List<SavedTrack>();
 
-            await foreach(var item in spotifyClient.Paginate(librarySongsRequest))
+            await foreach(var item in spotifyClient.Paginate(librarySongsRequest).ConfigureAwait(false))
             {
                 items.Add(item);
 
-                // await Task.Delay(10);
+                // await Task.Delay(10).ConfigureAwait(false);
             }
 
             return items;
@@ -171,15 +171,15 @@ namespace SpotifySync
 
         private static async Task<List<FullTrack>> GetPlaylistSongs(SpotifyClient spotifyClient, string spotifyPlaylistId)
         {
-            var playlistSongsRequest = await spotifyClient.Playlists.GetItems(spotifyPlaylistId);
+            var playlistSongsRequest = await spotifyClient.Playlists.GetItems(spotifyPlaylistId).ConfigureAwait(false);
 
             var items = new List<FullTrack>();
 
-            await foreach(var item in spotifyClient.Paginate(playlistSongsRequest))
+            await foreach(var item in spotifyClient.Paginate(playlistSongsRequest).ConfigureAwait(false))
             {
                 items.Add((FullTrack) item.Track);
 
-                // await Task.Delay(10);
+                // await Task.Delay(10).ConfigureAwait(false);
             }
 
             return items;
@@ -206,7 +206,7 @@ namespace SpotifySync
 
                 var uris = tracks.Select(x => x.Track.Uri).ToList();
 
-                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(uris));
+                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(uris)).ConfigureAwait(false);
             }
 
             for (var index = 0; index < removedSongs.Count; index += 100)
@@ -215,7 +215,7 @@ namespace SpotifySync
 
                 var uris = tracks.Select(x => new PlaylistRemoveItemsRequest.Item {Uri = x.Uri}).ToList();
 
-                await spotifyClient.Playlists.RemoveItems(spotifyPlaylistId, new PlaylistRemoveItemsRequest {Tracks = uris});
+                await spotifyClient.Playlists.RemoveItems(spotifyPlaylistId, new PlaylistRemoveItemsRequest {Tracks = uris}).ConfigureAwait(false);
             }
         }
 
@@ -255,7 +255,7 @@ namespace SpotifySync
 
             var clear = serviceValues.Clear(new ClearValuesRequest(), googleSheetId, "Current!A:E");
 
-            await clear.ExecuteAsync();
+            await clear.ExecuteAsync().ConfigureAwait(false);
 
             var rows = librarySongs.Select(song => new[]
             {
@@ -271,7 +271,7 @@ namespace SpotifySync
             var update = serviceValues.Update(valueRange, googleSheetId, "Current!A:E");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
-            await update.ExecuteAsync();
+            await update.ExecuteAsync().ConfigureAwait(false);
         }
 
         private static async Task AppendAddedLog(SheetsService sheetsService, List<SavedTrack> addedSongs, string googleSheetId)
@@ -295,7 +295,7 @@ namespace SpotifySync
             var update = serviceValues.Append(addedValueRange, googleSheetId, "Log!A:F");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
-            await update.ExecuteAsync();
+            await update.ExecuteAsync().ConfigureAwait(false);
         }
 
         private static async Task AppendRemovedLog(SheetsService sheetsService, List<FullTrack> removedSongs, string googleSheetId)
@@ -319,7 +319,7 @@ namespace SpotifySync
             var update = serviceValues.Append(removedValueRange, googleSheetId, "Log!A:F");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
-            await update.ExecuteAsync();
+            await update.ExecuteAsync().ConfigureAwait(false);
         }
     }
 }
