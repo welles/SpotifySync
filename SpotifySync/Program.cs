@@ -26,6 +26,7 @@ namespace SpotifySync
             var spotifyRefreshToken = Program.GetEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
             var spotifyPlaylistId = Program.GetEnvironmentVariable("SPOTIFY_PLAYLIST_ID");
             var googleToken = Program.GetEnvironmentVariable("GOOGLE_TOKEN");
+            var googleSheetId = Program.GetEnvironmentVariable("GOOGLE_SHEET_ID");
 
             Console.WriteLine("[Ok]");
 
@@ -68,6 +69,24 @@ namespace SpotifySync
             Console.Write("Synchronizing library and playlist... ");
 
             await Program.SynchronizePlaylist(spotifyClient, spotifyPlaylistId, addedSongs, removedSongs);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Write added songs to spreadsheet... ");
+
+            await Program.AppendAddedLog(sheetsService, addedSongs, googleSheetId);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Write removed songs to spreadsheet... ");
+
+            await Program.AppendRemovedLog(sheetsService, removedSongs, googleSheetId);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Write all saved songs to spreadsheet... ");
+
+            await Program.UpdateCurrentSheet(sheetsService, librarySongs, googleSheetId);
 
             Console.WriteLine("[Ok]");
         }
@@ -228,6 +247,75 @@ namespace SpotifySync
             writer.Flush();
             stream.Position = 0;
             return stream;
+        }
+
+        private static async Task UpdateCurrentSheet(SheetsService sheetsService, List<SavedTrack> librarySongs, string googleSheetId)
+        {
+            var serviceValues = sheetsService.Spreadsheets.Values;
+
+            var clear = serviceValues.Clear(new ClearValuesRequest(), googleSheetId, "Current!A:E");
+
+            await clear.ExecuteAsync();
+
+            var rows = librarySongs.Select(song => new[]
+            {
+                $"=IMAGE(\"{song.Track.Album.Images.OrderByDescending(x => x.Height).First().Url}\")",
+                song.Track.Name,
+                song.Track.Artists.First().Name,
+                song.Track.Album.Name,
+                song.Track.Id
+            }).ToArray();
+
+            var valueRange = new ValueRange {Values = rows };
+
+            var update = serviceValues.Update(valueRange, googleSheetId, "Current!A:E");
+            update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+
+            await update.ExecuteAsync();
+        }
+
+        private static async Task AppendAddedLog(SheetsService sheetsService, List<SavedTrack> addedSongs, string googleSheetId)
+        {
+            var serviceValues = sheetsService.Spreadsheets.Values;
+
+            var addedRows = addedSongs.Select(song => new[]
+            {
+                "Added",
+                $"=IMAGE(\"{song.Track.Album.Images.OrderByDescending(x => x.Height).First().Url}\")",
+                song.Track.Name,
+                song.Track.Artists.First().Name,
+                song.Track.Album.Name,
+                song.Track.Id
+            }).ToArray();
+
+            var addedValueRange = new ValueRange {Values = addedRows };
+
+            var update = serviceValues.Append(addedValueRange, googleSheetId, "Log!A:F");
+            update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
+
+            await update.ExecuteAsync();
+        }
+
+        private static async Task AppendRemovedLog(SheetsService sheetsService, List<FullTrack> removedSongs, string googleSheetId)
+        {
+            var serviceValues = sheetsService.Spreadsheets.Values;
+
+            var removedRows = removedSongs.Select(song => new[]
+            {
+                "Removed",
+                $"=IMAGE(\"{song.Album.Images.OrderByDescending(x => x.Height).First().Url}\")",
+                song.Name,
+                song.Artists.First().Name,
+                song.Album.Name,
+                song.Id
+            }).ToArray();
+
+            var removedValueRange = new ValueRange {Values = removedRows };
+
+            var update = serviceValues.Append(removedValueRange, googleSheetId, "Log!A:F");
+            update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
+
+            await update.ExecuteAsync();
         }
     }
 }
