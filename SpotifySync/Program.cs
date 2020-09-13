@@ -194,7 +194,7 @@ namespace SpotifySync
             var added = libraryIds.Except(playlistIds).ToList();
             var removed = playlistIds.Except(libraryIds).ToList();
 
-            addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).ToList();
+            addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).OrderBy(x => x.AddedAt).ToList();
             removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
         }
 
