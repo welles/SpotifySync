@@ -18,6 +18,7 @@ namespace SpotifySync
             var spotifyClientId = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
             var spotifyClientSecret = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
             var spotifyRefreshToken = Program.GetEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
+            var spotifyPlaylistId = Program.GetEnvironmentVariable("SPOTIFY_PLAYLIST_ID");
 
             Console.WriteLine("[Ok]");
 
@@ -38,6 +39,12 @@ namespace SpotifySync
             var librarySongs = await Program.GetLibrarySongs(spotifyClient);
 
             Console.WriteLine($"[Ok: {librarySongs.Count} songs]");
+
+            Console.Write("Loading playlist songs list... ");
+
+            var playlistSongs = await Program.GetPlaylistSongs(spotifyClient, spotifyPlaylistId);
+
+            Console.WriteLine($"[Ok: {playlistSongs.Count} songs]");
         }
 
         private static async Task<string> GetSpotifyToken(string spotifyClientId, string spotifyClientSecret, string spotifyRefreshToken)
@@ -111,6 +118,22 @@ namespace SpotifySync
             await foreach(var item in spotifyClient.Paginate(librarySongsRequest))
             {
                 items.Add(item);
+
+                await Task.Delay(10);
+            }
+
+            return items;
+        }
+
+        private static async Task<List<FullTrack>> GetPlaylistSongs(SpotifyClient spotifyClient, string spotifyPlaylistId)
+        {
+            var playlistSongsRequest = await spotifyClient.Playlists.GetItems(spotifyPlaylistId);
+
+            var items = new List<FullTrack>();
+
+            await foreach(var item in spotifyClient.Paginate(playlistSongsRequest))
+            {
+                items.Add((FullTrack) item.Track);
 
                 await Task.Delay(10);
             }
