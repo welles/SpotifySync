@@ -1,7 +1,8 @@
 name: Scheduled Run
 
 on:
-  release
+  schedule:
+    - cron:  '*/15 * * * *'
 
 jobs:
   scheduled_run:
