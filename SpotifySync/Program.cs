@@ -52,6 +52,12 @@ namespace SpotifySync
             Program.CheckAddedRemovedSongs(librarySongs, playlistSongs, out var addedSongs, out var removedSongs);
 
             Console.WriteLine($"[Ok: {addedSongs.Count} added, {removedSongs.Count} removed]");
+
+            Console.Write("Synchronizing library and playlist... ");
+
+            await Program.SynchronizePlaylist(spotifyClient, spotifyPlaylistId, addedSongs, removedSongs);
+
+            Console.WriteLine("[Ok]");
         }
 
         private static async Task<string> GetSpotifyToken(string spotifyClientId, string spotifyClientSecret, string spotifyRefreshToken)
@@ -159,6 +165,27 @@ namespace SpotifySync
 
             addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).ToList();
             removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
+        }
+
+        private static async Task SynchronizePlaylist(SpotifyClient spotifyClient, string spotifyPlaylistId, List<SavedTrack> addedSongs, List<FullTrack> removedSongs)
+        {
+            for (var index = 0; index < addedSongs.Count; index += 100)
+            {
+                var tracks = addedSongs.Skip(index).Take(100).ToList();
+
+                var uris = tracks.Select(x => x.Track.Uri).ToList();
+
+                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(uris));
+            }
+
+            for (var index = 0; index < removedSongs.Count; index += 100)
+            {
+                var tracks = removedSongs.Skip(index).Take(100).ToList();
+
+                var uris = tracks.Select(x => new PlaylistRemoveItemsRequest.Item {Uri = x.Uri}).ToList();
+
+                await spotifyClient.Playlists.RemoveItems(spotifyPlaylistId, new PlaylistRemoveItemsRequest {Tracks = uris});
+            }
         }
     }
 }
