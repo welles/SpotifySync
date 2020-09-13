@@ -32,6 +32,12 @@ namespace SpotifySync
             var spotifyClient = await Program.GetSpotifyClient(spotifyToken);
 
             Console.WriteLine("[Ok]");
+
+            Console.Write("Loading library songs list... ");
+
+            var librarySongs = await Program.GetLibrarySongs(spotifyClient);
+
+            Console.WriteLine($"[Ok: {librarySongs.Count} songs]");
         }
 
         private static async Task<string> GetSpotifyToken(string spotifyClientId, string spotifyClientSecret, string spotifyRefreshToken)
@@ -94,6 +100,22 @@ namespace SpotifySync
             }
 
             return spotify;
+        }
+
+        private static async Task<List<SavedTrack>> GetLibrarySongs(SpotifyClient spotifyClient)
+        {
+            var librarySongsRequest = await spotifyClient.Library.GetTracks();
+
+            var items = new List<SavedTrack>();
+
+            await foreach(var item in spotifyClient.Paginate(librarySongsRequest))
+            {
+                items.Add(item);
+
+                await Task.Delay(10);
+            }
+
+            return items;
         }
     }
 }
