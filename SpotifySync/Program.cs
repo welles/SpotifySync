@@ -22,6 +22,8 @@ namespace SpotifySync
 
         private const string SpotifyClientIdName = "SPOTIFY_CLIENT_ID";
 
+        private const string SpotifyPlaylistIdName = "SPOTIFY_PLAYLIST_ID";
+
         private const string GitHubTokenName = "GH_TOKEN";
 
         private const string GitHubRepositoryName = "GITHUB_REPOSITORY";
@@ -32,6 +34,8 @@ namespace SpotifySync
 
 
         private static readonly string SpotifyClientId = Environment.GetEnvironmentVariable(Program.SpotifyClientIdName);
+
+        private static readonly string SpotifyPlaylistId = Environment.GetEnvironmentVariable(Program.SpotifyPlaylistIdName);
 
         private static readonly string SpotifyToken = Environment.GetEnvironmentVariable(Program.SpotifyTokenName);
 
@@ -47,6 +51,7 @@ namespace SpotifySync
         {
             Program.CheckEnvVariable(Program.SpotifyToken, Program.SpotifyTokenName);
             Program.CheckEnvVariable(Program.SpotifyClientId, Program.SpotifyClientIdName);
+            Program.CheckEnvVariable(Program.SpotifyPlaylistId, Program.SpotifyPlaylistIdName);
             Program.CheckEnvVariable(Program.GitHubToken, Program.GitHubTokenName);
             Program.CheckEnvVariable(Program.SpotifyToken, Program.SpotifyTokenName);
             Program.CheckEnvVariable(Program.GitHubRepository, Program.GitHubRepositoryName);
@@ -70,14 +75,7 @@ namespace SpotifySync
 
             var librarySongsTask = (await spotify.Library.GetTracks()).Paginate(spotify);
 
-            var savedPlaylist = (await (await spotify.Playlists.CurrentUsers()).Paginate(spotify)).SingleOrDefault(x => x.Name == "SAVED" && x.Owner.Id == me.Id);
-
-            if (savedPlaylist == null)
-            {
-                throw new InvalidOperationException("Playlist SAVED not found.");
-            }
-
-            var playlistItems = await (await spotify.Playlists.GetItems(savedPlaylist.Id)).Paginate(spotify);
+            var playlistItems = await (await spotify.Playlists.GetItems(Program.SpotifyPlaylistId)).Paginate(spotify);
             var playlistSongs = playlistItems.Select(x => x.Track).Cast<FullTrack>().ToList();
 
             var librarySongs = await librarySongsTask;
@@ -86,7 +84,7 @@ namespace SpotifySync
             Console.WriteLine($"There are {librarySongs.Count} songs in the library.");
             Console.WriteLine($"There are {playlistSongs.Count} songs in the playlist.");
 
-            await Program.SynchronizeSongs(spotify, savedPlaylist, librarySongs, playlistSongs);
+            await Program.SynchronizeSongs(spotify, librarySongs, playlistSongs);
         }
 
         private static async Task<List<T>> Paginate<T>(this IPaginatable<T> pages, ISpotifyClient spotify)
@@ -112,7 +110,7 @@ namespace SpotifySync
             }
         }
 
-        private static async Task SynchronizeSongs(SpotifyClient spotify, SimplePlaylist savedPlaylist, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
+        private static async Task SynchronizeSongs(SpotifyClient spotify, IList<SavedTrack> librarySongs, IList<FullTrack> playlistSongs)
         {
             var libraryIds = librarySongs.Select(x => x.Track.Id).ToList();
             var playlistIds = playlistSongs.Select(x => x.Id).ToList();
@@ -132,7 +130,7 @@ namespace SpotifySync
 
                 var uris = tracks.Select(x => x.Track.Uri).ToList();
 
-                await spotify.Playlists.AddItems(savedPlaylist.Id, new PlaylistAddItemsRequest(uris));
+                await spotify.Playlists.AddItems(Program.SpotifyPlaylistId, new PlaylistAddItemsRequest(uris));
 
                 Console.WriteLine($"Added {tracks.Count} songs to playlist.");
             }
@@ -143,7 +141,7 @@ namespace SpotifySync
 
                 var uris = tracks.Select(x => new PlaylistRemoveItemsRequest.Item {Uri = x.Uri}).ToList();
 
-                await spotify.Playlists.RemoveItems(savedPlaylist.Id, new PlaylistRemoveItemsRequest {Tracks = uris});
+                await spotify.Playlists.RemoveItems(Program.SpotifyPlaylistId, new PlaylistRemoveItemsRequest {Tracks = uris});
 
                 Console.WriteLine($"Removed {tracks.Count} songs from playlist.");
             }
