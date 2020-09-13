@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Sheets.v4;
+using Google.Apis.Sheets.v4.Data;
 using Newtonsoft.Json.Linq;
 using SpotifyAPI.Web;
 
@@ -20,6 +25,7 @@ namespace SpotifySync
             var spotifyClientSecret = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
             var spotifyRefreshToken = Program.GetEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
             var spotifyPlaylistId = Program.GetEnvironmentVariable("SPOTIFY_PLAYLIST_ID");
+            var googleToken = Program.GetEnvironmentVariable("GOOGLE_TOKEN");
 
             Console.WriteLine("[Ok]");
 
@@ -32,6 +38,12 @@ namespace SpotifySync
             Console.Write("Authenticating with Spotify... ");
 
             var spotifyClient = await Program.GetSpotifyClient(spotifyToken);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Authenticating with Google Sheets... ");
+
+            var sheetsService = Program.GetSheetsService(googleToken);
 
             Console.WriteLine("[Ok]");
 
@@ -186,6 +198,36 @@ namespace SpotifySync
 
                 await spotifyClient.Playlists.RemoveItems(spotifyPlaylistId, new PlaylistRemoveItemsRequest {Tracks = uris});
             }
+        }
+
+        private static SheetsService GetSheetsService(string googleToken)
+        {
+            using (var stream = googleToken.ToStream())
+            {
+                var serviceInitializer = new BaseClientService.Initializer
+                {
+                    HttpClientInitializer = GoogleCredential.FromStream(stream).CreateScoped(SheetsService.Scope.Spreadsheets)
+                };
+
+                var service = new SheetsService(serviceInitializer);
+
+                if (string.IsNullOrWhiteSpace(service.Name))
+                {
+                    throw new Exception("Authorization with Google failed.");
+                }
+
+                return service;
+            }
+        }
+
+        private static Stream ToStream(this string s)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
         }
     }
 }
