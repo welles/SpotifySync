@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -45,6 +46,12 @@ namespace SpotifySync
             var playlistSongs = await Program.GetPlaylistSongs(spotifyClient, spotifyPlaylistId);
 
             Console.WriteLine($"[Ok: {playlistSongs.Count} songs]");
+
+            Console.Write("Checking for added and removed songs... ");
+
+            Program.CheckAddedRemovedSongs(librarySongs, playlistSongs, out var addedSongs, out var removedSongs);
+
+            Console.WriteLine($"[Ok: {addedSongs.Count} added, {removedSongs.Count} removed]");
         }
 
         private static async Task<string> GetSpotifyToken(string spotifyClientId, string spotifyClientSecret, string spotifyRefreshToken)
@@ -139,6 +146,19 @@ namespace SpotifySync
             }
 
             return items;
+        }
+
+        private static void CheckAddedRemovedSongs(List<SavedTrack> librarySongs, List<FullTrack> playlistSongs,
+            out List<SavedTrack> addedSongs, out List<FullTrack> removedSongs)
+        {
+            var libraryIds = librarySongs.Select(x => x.Track.Id).ToList();
+            var playlistIds = playlistSongs.Select(x => x.Id).ToList();
+
+            var added = libraryIds.Except(playlistIds).ToList();
+            var removed = playlistIds.Except(libraryIds).ToList();
+
+            addedSongs = librarySongs.Where(x => added.Contains(x.Track.Id)).ToList();
+            removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
         }
     }
 }
