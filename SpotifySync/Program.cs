@@ -139,7 +139,9 @@ namespace SpotifySync
 
         private static async Task<SpotifyClient> GetSpotifyClient(string spotifyToken)
         {
-            var config = SpotifyClientConfig.CreateDefault().WithToken(spotifyToken, "Bearer");
+            var config = SpotifyClientConfig.CreateDefault()
+                .WithToken(spotifyToken, "Bearer")
+                .WithRetryHandler(new SimpleRetryHandler() {RetryAfter = TimeSpan.FromSeconds(1), RetryTimes = 1});;
 
             var spotify = new SpotifyClient(config);
 
