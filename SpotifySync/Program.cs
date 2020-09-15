@@ -366,7 +366,7 @@ namespace SpotifySync
         {
             var serviceValues = sheetsService.Spreadsheets.Values;
 
-            var clear = serviceValues.Clear(new ClearValuesRequest(), googleSheetId, "Current!A:F");
+            var clear = serviceValues.Clear(new ClearValuesRequest(), googleSheetId, "Current!A:G");
 
             await clear.ExecuteAsync().ConfigureAwait(false);
 
@@ -376,13 +376,14 @@ namespace SpotifySync
                 song.Track.Name,
                 song.Track.Artists.First().Name,
                 song.Track.Album.Name,
+                song.AddedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 song.Track.Id,
                 $"=HYPERLINK(\"https://open.spotify.com/track/{song.Track.Id}\";\"Link\")"
             }).ToArray();
 
             var valueRange = new ValueRange {Values = rows };
 
-            var update = serviceValues.Update(valueRange, googleSheetId, "Current!A:F");
+            var update = serviceValues.Update(valueRange, googleSheetId, "Current!A:G");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
             await update.ExecuteAsync().ConfigureAwait(false);
