@@ -303,7 +303,7 @@ namespace SpotifySync
         {
             foreach (var song in songs)
             {
-                var delay = Task.Delay(1000);
+                var delay = Task.Delay(1000).ConfigureAwait(false);
 
                 await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Uri})).ConfigureAwait(false);
 
@@ -313,13 +313,13 @@ namespace SpotifySync
 
         private static async Task SynchronizePlaylist(SpotifyClient spotifyClient, string spotifyPlaylistId, List<SavedTrack> addedSongs, List<FullTrack> removedSongs)
         {
-            for (var index = 0; index < addedSongs.Count; index += 100)
+            foreach (var song in addedSongs)
             {
-                var tracks = addedSongs.Skip(index).Take(100).ToList();
+                var delay = Task.Delay(1000).ConfigureAwait(false);
 
-                var uris = tracks.Select(x => x.Track.Uri).ToList();
+                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Track.Uri}) {Position = 0}).ConfigureAwait(false);
 
-                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(uris)).ConfigureAwait(false);
+                await delay;
             }
 
             for (var index = 0; index < removedSongs.Count; index += 100)
