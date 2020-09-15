@@ -33,13 +33,50 @@ namespace SpotifySync
                     await Program.DiscoverWeekly();
                     break;
                 case "releaseradar":
-                    throw new NotImplementedException();
+                    await Program.ReleaseRadar();
                     break;
                 default:
                     throw new InvalidOperationException("Invalid mode parameter! Available modes: savedsongs, discoverweekly, releaseradar");
             }
 
             return 0;
+        }
+
+        private static async Task ReleaseRadar()
+        {
+            Console.Write("Loading environment variables... ");
+
+            var spotifyClientId = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
+            var spotifyClientSecret = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
+            var spotifyRefreshToken = Program.GetEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
+            var spotifyReleaseRadarId = Program.GetEnvironmentVariable("SPOTIFY_RELEASE_RADAR_ID");
+            var spotifyReleaseRadarBackupId = Program.GetEnvironmentVariable("SPOTIFY_RELEASE_RADAR_BACKUP_ID");
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Loading Spotify token... ");
+
+            var spotifyToken = await Program.GetSpotifyToken(spotifyClientId, spotifyClientSecret, spotifyRefreshToken).ConfigureAwait(false);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Authenticating with Spotify... ");
+
+            var spotifyClient = await Program.GetSpotifyClient(spotifyToken).ConfigureAwait(false);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Loading release radar songs list... ");
+
+            var releaseRadarSongs = await Program.GetPlaylistSongs(spotifyClient, spotifyReleaseRadarId).ConfigureAwait(false);
+
+            Console.WriteLine($"[Ok: {releaseRadarSongs.Count} songs]");
+
+            Console.Write("Adding release radar songs to playlist... ");
+
+            await Program.AddSongsToPlaylist(spotifyClient, spotifyReleaseRadarBackupId, releaseRadarSongs);
+
+            Console.WriteLine("[Ok]");
         }
 
         private static async Task DiscoverWeekly()
