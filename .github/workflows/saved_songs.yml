@@ -1,12 +1,12 @@
-name: Scheduled Run
+name: Saved Songs
 
 on:
   schedule:
     - cron:  '*/15 * * * *'
 
 jobs:
-  scheduled_run:
-    name: Scheduled Run
+  saved_songs:
+    name: Saved Songs
     runs-on: windows-latest
 
     steps:
