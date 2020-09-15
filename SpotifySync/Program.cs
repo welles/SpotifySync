@@ -225,6 +225,18 @@ namespace SpotifySync
             removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
         }
 
+        private static async Task AddSongsToPlaylist(SpotifyClient spotifyClient, string spotifyPlaylistId, List<FullTrack> songs)
+        {
+            foreach (var song in songs)
+            {
+                var delay = Task.Delay(1000);
+
+                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Uri})).ConfigureAwait(false);
+
+                await delay;
+            }
+        }
+
         private static async Task SynchronizePlaylist(SpotifyClient spotifyClient, string spotifyPlaylistId, List<SavedTrack> addedSongs, List<FullTrack> removedSongs)
         {
             for (var index = 0; index < addedSongs.Count; index += 100)
