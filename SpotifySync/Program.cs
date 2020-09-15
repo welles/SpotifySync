@@ -402,13 +402,14 @@ namespace SpotifySync
                 song.Track.Name,
                 song.Track.Artists.First().Name,
                 song.Track.Album.Name,
+                song.AddedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 song.Track.Id,
                 $"=HYPERLINK(\"https://open.spotify.com/track/{song.Track.Id}\";\"Link\")"
             }).ToArray();
 
             var addedValueRange = new ValueRange {Values = addedRows };
 
-            var update = serviceValues.Append(addedValueRange, googleSheetId, "Log!A:G");
+            var update = serviceValues.Append(addedValueRange, googleSheetId, "Log!A:H");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
             await update.ExecuteAsync().ConfigureAwait(false);
@@ -420,6 +421,8 @@ namespace SpotifySync
 
             var serviceValues = sheetsService.Spreadsheets.Values;
 
+            var now = DateTime.Now;
+
             var removedRows = removedSongs.Select(song => new[]
             {
                 "Removed",
@@ -427,13 +430,14 @@ namespace SpotifySync
                 song.Name,
                 song.Artists.First().Name,
                 song.Album.Name,
+                now.ToString("yyyy-MM-dd HH:mm:ss"),
                 song.Id,
                 $"=HYPERLINK(\"https://open.spotify.com/track/{song.Id}\";\"Link\")"
             }).ToArray();
 
             var removedValueRange = new ValueRange {Values = removedRows };
 
-            var update = serviceValues.Append(removedValueRange, googleSheetId, "Log!A:G");
+            var update = serviceValues.Append(removedValueRange, googleSheetId, "Log!A:H");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
             await update.ExecuteAsync().ConfigureAwait(false);
