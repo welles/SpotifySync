@@ -1,0 +1,37 @@
+﻿name: Release Radar
+
+on:
+  schedule:
+    - cron:  '0 5 * * 5'
+
+jobs:
+  release_radar:
+    name: Release Radar
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@master
+        with:
+          dotnet-version: 3.1.x
+        env:
+          DOTNET_NOLOGO: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+      - name: Build SpotifySync
+        run: dotnet build .\SpotifySync\SpotifySync.csproj --configuration Release
+        env:
+          DOTNET_NOLOGO: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+      - name: Run SpotifySync
+        run: .\SpotifySync\bin\Release\netcoreapp3.1\SpotifySync.exe releaseradar
+        env:
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+          SPOTIFY_RELEASE_RADAR_ID: ${{ secrets.SPOTIFY_RELEASE_RADAR_ID }}
+          SPOTIFY_RELEASE_RADAR_BACKUP_ID: ${{ secrets.SPOTIFY_RELEASE_RADAR_BACKUP_ID }}
