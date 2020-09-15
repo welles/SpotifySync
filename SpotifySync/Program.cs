@@ -17,7 +17,106 @@ namespace SpotifySync
 {
     public static class Program
     {
-        public static async Task Main()
+        public static async Task<int> Main(params string[] args)
+        {
+            if (args.Length == 0 || string.IsNullOrWhiteSpace(args[0]))
+            {
+                throw new InvalidOperationException("Invalid mode parameter! Available modes: savedsongs, discoverweekly, releaseradar");
+            }
+
+            switch (args[0])
+            {
+                case "savedsongs":
+                    await Program.SavedSongs();
+                    break;
+                case "discoverweekly":
+                    await Program.DiscoverWeekly();
+                    break;
+                case "releaseradar":
+                    await Program.ReleaseRadar();
+                    break;
+                default:
+                    throw new InvalidOperationException("Invalid mode parameter! Available modes: savedsongs, discoverweekly, releaseradar");
+            }
+
+            return 0;
+        }
+
+        private static async Task ReleaseRadar()
+        {
+            Console.Write("Loading environment variables... ");
+
+            var spotifyClientId = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
+            var spotifyClientSecret = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
+            var spotifyRefreshToken = Program.GetEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
+            var spotifyReleaseRadarId = Program.GetEnvironmentVariable("SPOTIFY_RELEASE_RADAR_ID");
+            var spotifyReleaseRadarBackupId = Program.GetEnvironmentVariable("SPOTIFY_RELEASE_RADAR_BACKUP_ID");
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Loading Spotify token... ");
+
+            var spotifyToken = await Program.GetSpotifyToken(spotifyClientId, spotifyClientSecret, spotifyRefreshToken).ConfigureAwait(false);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Authenticating with Spotify... ");
+
+            var spotifyClient = await Program.GetSpotifyClient(spotifyToken).ConfigureAwait(false);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Loading release radar songs list... ");
+
+            var releaseRadarSongs = await Program.GetPlaylistSongs(spotifyClient, spotifyReleaseRadarId).ConfigureAwait(false);
+
+            Console.WriteLine($"[Ok: {releaseRadarSongs.Count} songs]");
+
+            Console.Write("Adding release radar songs to playlist... ");
+
+            await Program.AddSongsToPlaylist(spotifyClient, spotifyReleaseRadarBackupId, releaseRadarSongs);
+
+            Console.WriteLine("[Ok]");
+        }
+
+        private static async Task DiscoverWeekly()
+        {
+            Console.Write("Loading environment variables... ");
+
+            var spotifyClientId = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
+            var spotifyClientSecret = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
+            var spotifyRefreshToken = Program.GetEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
+            var spotifyDiscoverWeeklyId = Program.GetEnvironmentVariable("SPOTIFY_DISCOVER_WEEKLY_ID");
+            var spotifyDiscoverWeeklyBackupId = Program.GetEnvironmentVariable("SPOTIFY_DISCOVER_WEEKLY_BACKUP_ID");
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Loading Spotify token... ");
+
+            var spotifyToken = await Program.GetSpotifyToken(spotifyClientId, spotifyClientSecret, spotifyRefreshToken).ConfigureAwait(false);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Authenticating with Spotify... ");
+
+            var spotifyClient = await Program.GetSpotifyClient(spotifyToken).ConfigureAwait(false);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Loading discover weekly songs list... ");
+
+            var discoverWeeklySongs = await Program.GetPlaylistSongs(spotifyClient, spotifyDiscoverWeeklyId).ConfigureAwait(false);
+
+            Console.WriteLine($"[Ok: {discoverWeeklySongs.Count} songs]");
+
+            Console.Write("Adding discover weekly songs to playlist... ");
+
+            await Program.AddSongsToPlaylist(spotifyClient, spotifyDiscoverWeeklyBackupId, discoverWeeklySongs);
+
+            Console.WriteLine("[Ok]");
+        }
+
+        private static async Task SavedSongs()
         {
             Console.Write("Loading environment variables... ");
 
@@ -66,29 +165,42 @@ namespace SpotifySync
 
             Console.WriteLine($"[Ok: {addedSongs.Count} added, {removedSongs.Count} removed]");
 
-            Console.Write("Synchronizing library and playlist... ");
+            if (addedSongs.Any() || removedSongs.Any())
+            {
+                Console.Write("Synchronizing library and playlist... ");
 
-            await Program.SynchronizePlaylist(spotifyClient, spotifyPlaylistId, addedSongs, removedSongs).ConfigureAwait(false);
+                await Program.SynchronizePlaylist(spotifyClient, spotifyPlaylistId, addedSongs, removedSongs).ConfigureAwait(false);
 
-            Console.WriteLine("[Ok]");
+                Console.WriteLine("[Ok]");
 
-            Console.Write("Write added songs to spreadsheet... ");
+                if (addedSongs.Any())
+                {
+                    Console.Write("Write added songs to spreadsheet... ");
 
-            await Program.AppendAddedLog(sheetsService, addedSongs, googleSheetId).ConfigureAwait(false);
+                    await Program.AppendAddedLog(sheetsService, addedSongs, googleSheetId).ConfigureAwait(false);
 
-            Console.WriteLine("[Ok]");
+                    Console.WriteLine("[Ok]");
+                }
 
-            Console.Write("Write removed songs to spreadsheet... ");
+                if (removedSongs.Any())
+                {
+                    Console.Write("Write removed songs to spreadsheet... ");
 
-            await Program.AppendRemovedLog(sheetsService, removedSongs, googleSheetId).ConfigureAwait(false);
+                    await Program.AppendRemovedLog(sheetsService, removedSongs, googleSheetId).ConfigureAwait(false);
 
-            Console.WriteLine("[Ok]");
+                    Console.WriteLine("[Ok]");
+                }
 
-            Console.Write("Write all saved songs to spreadsheet... ");
+                Console.Write("Write all saved songs to spreadsheet... ");
 
-            await Program.UpdateCurrentSheet(sheetsService, librarySongs, googleSheetId).ConfigureAwait(false);
+                await Program.UpdateCurrentSheet(sheetsService, librarySongs, googleSheetId).ConfigureAwait(false);
 
-            Console.WriteLine("[Ok]");
+                Console.WriteLine("[Ok]");
+            }
+            else
+            {
+                Console.WriteLine("Saved songs did not change since last run!");
+            }
         }
 
         private static async Task<string> GetSpotifyToken(string spotifyClientId, string spotifyClientSecret, string spotifyRefreshToken)
@@ -200,15 +312,27 @@ namespace SpotifySync
             removedSongs = playlistSongs.Where(x => removed.Contains(x.Id)).ToList();
         }
 
+        private static async Task AddSongsToPlaylist(SpotifyClient spotifyClient, string spotifyPlaylistId, List<FullTrack> songs)
+        {
+            foreach (var song in songs)
+            {
+                var delay = Task.Delay(1000).ConfigureAwait(false);
+
+                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Uri})).ConfigureAwait(false);
+
+                await delay;
+            }
+        }
+
         private static async Task SynchronizePlaylist(SpotifyClient spotifyClient, string spotifyPlaylistId, List<SavedTrack> addedSongs, List<FullTrack> removedSongs)
         {
-            for (var index = 0; index < addedSongs.Count; index += 100)
+            foreach (var song in addedSongs)
             {
-                var tracks = addedSongs.Skip(index).Take(100).ToList();
+                var delay = Task.Delay(1000).ConfigureAwait(false);
 
-                var uris = tracks.Select(x => x.Track.Uri).ToList();
+                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Track.Uri}) {Position = 0}).ConfigureAwait(false);
 
-                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(uris)).ConfigureAwait(false);
+                await delay;
             }
 
             for (var index = 0; index < removedSongs.Count; index += 100)
@@ -255,7 +379,7 @@ namespace SpotifySync
         {
             var serviceValues = sheetsService.Spreadsheets.Values;
 
-            var clear = serviceValues.Clear(new ClearValuesRequest(), googleSheetId, "Current!A:F");
+            var clear = serviceValues.Clear(new ClearValuesRequest(), googleSheetId, "Current!A:G");
 
             await clear.ExecuteAsync().ConfigureAwait(false);
 
@@ -265,13 +389,14 @@ namespace SpotifySync
                 song.Track.Name,
                 song.Track.Artists.First().Name,
                 song.Track.Album.Name,
+                song.AddedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 song.Track.Id,
                 $"=HYPERLINK(\"https://open.spotify.com/track/{song.Track.Id}\";\"Link\")"
             }).ToArray();
 
             var valueRange = new ValueRange {Values = rows };
 
-            var update = serviceValues.Update(valueRange, googleSheetId, "Current!A:F");
+            var update = serviceValues.Update(valueRange, googleSheetId, "Current!A:G");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
             await update.ExecuteAsync().ConfigureAwait(false);
@@ -290,13 +415,14 @@ namespace SpotifySync
                 song.Track.Name,
                 song.Track.Artists.First().Name,
                 song.Track.Album.Name,
+                song.AddedAt.ToString("yyyy-MM-dd HH:mm:ss"),
                 song.Track.Id,
                 $"=HYPERLINK(\"https://open.spotify.com/track/{song.Track.Id}\";\"Link\")"
             }).ToArray();
 
             var addedValueRange = new ValueRange {Values = addedRows };
 
-            var update = serviceValues.Append(addedValueRange, googleSheetId, "Log!A:G");
+            var update = serviceValues.Append(addedValueRange, googleSheetId, "Log!A:H");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
             await update.ExecuteAsync().ConfigureAwait(false);
@@ -308,6 +434,8 @@ namespace SpotifySync
 
             var serviceValues = sheetsService.Spreadsheets.Values;
 
+            var now = DateTime.Now;
+
             var removedRows = removedSongs.Select(song => new[]
             {
                 "Removed",
@@ -315,13 +443,14 @@ namespace SpotifySync
                 song.Name,
                 song.Artists.First().Name,
                 song.Album.Name,
+                now.ToString("yyyy-MM-dd HH:mm:ss"),
                 song.Id,
                 $"=HYPERLINK(\"https://open.spotify.com/track/{song.Id}\";\"Link\")"
             }).ToArray();
 
             var removedValueRange = new ValueRange {Values = removedRows };
 
-            var update = serviceValues.Append(removedValueRange, googleSheetId, "Log!A:G");
+            var update = serviceValues.Append(removedValueRange, googleSheetId, "Log!A:H");
             update.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
 
             await update.ExecuteAsync().ConfigureAwait(false);

@@ -1,13 +1,13 @@
-name: Saved Songs
+﻿name: Discover Weekly
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0,15,30,45 * * * *'
+    - cron:  '0 5 * * 1'
 
 jobs:
-  saved_songs:
-    name: Saved Songs
+  discover_weekly:
+    name: Discover Weekly
     runs-on: windows-latest
 
     steps:
@@ -29,11 +29,10 @@ jobs:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
       - name: Run SpotifySync
-        run: .\SpotifySync\bin\Release\netcoreapp3.1\SpotifySync.exe savedsongs
+        run: .\SpotifySync\bin\Release\netcoreapp3.1\SpotifySync.exe discoverweekly
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
-          SPOTIFY_PLAYLIST_ID: ${{ secrets.SPOTIFY_PLAYLIST_ID }}
-          GOOGLE_TOKEN: ${{ secrets.GOOGLE_TOKEN }}
-          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          SPOTIFY_DISCOVER_WEEKLY_ID: ${{ secrets.SPOTIFY_DISCOVER_WEEKLY_ID }}
+          SPOTIFY_DISCOVER_WEEKLY_BACKUP_ID: ${{ secrets.SPOTIFY_DISCOVER_WEEKLY_BACKUP_ID }}
