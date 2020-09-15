@@ -1,8 +1,7 @@
 name: Saved Songs
 
 on:
-  schedule:
-    - cron:  '0,15,30,45 * * * *'
+  release
 
 jobs:
   saved_songs:
