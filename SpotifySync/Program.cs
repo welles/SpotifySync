@@ -17,7 +17,32 @@ namespace SpotifySync
 {
     public static class Program
     {
-        public static async Task Main()
+        public static async Task<int> Main(params string[] args)
+        {
+            if (args.Length == 0 || string.IsNullOrWhiteSpace(args[0]))
+            {
+                throw new InvalidOperationException("Invalid mode parameter! Available modes: savedsongs, discoverweekly, releaseradar");
+            }
+
+            switch (args[0])
+            {
+                case "savedsongs":
+                    await Program.SavedSongs();
+                    break;
+                case "discoverweekly":
+                    throw new NotImplementedException();
+                    break;
+                case "releaseradar":
+                    throw new NotImplementedException();
+                    break;
+                default:
+                    throw new InvalidOperationException("Invalid mode parameter! Available modes: savedsongs, discoverweekly, releaseradar");
+            }
+
+            return 0;
+        }
+
+        private static async Task SavedSongs()
         {
             Console.Write("Loading environment variables... ");
 
