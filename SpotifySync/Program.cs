@@ -316,7 +316,7 @@ namespace SpotifySync
                 song.Artists.First().Name,
                 song.Album.Name,
                 song.Id,
-                $"=HYPERLINK(\"https://open.spotify.com/track/{song.Track.Id}\";\"Link\")"
+                $"=HYPERLINK(\"https://open.spotify.com/track/{song.Id}\";\"Link\")"
             }).ToArray();
 
             var removedValueRange = new ValueRange {Values = removedRows };
