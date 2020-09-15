@@ -30,7 +30,7 @@ namespace SpotifySync
                     await Program.SavedSongs();
                     break;
                 case "discoverweekly":
-                    throw new NotImplementedException();
+                    await Program.DiscoverWeekly();
                     break;
                 case "releaseradar":
                     throw new NotImplementedException();
@@ -40,6 +40,43 @@ namespace SpotifySync
             }
 
             return 0;
+        }
+
+        private static async Task DiscoverWeekly()
+        {
+            Console.Write("Loading environment variables... ");
+
+            var spotifyClientId = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_ID");
+            var spotifyClientSecret = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
+            var spotifyRefreshToken = Program.GetEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
+            var spotifyDiscoverWeeklyId = Program.GetEnvironmentVariable("SPOTIFY_DISCOVER_WEEKLY_ID");
+            var spotifyDiscoverWeeklyBackupId = Program.GetEnvironmentVariable("SPOTIFY_DISCOVER_WEEKLY_BACKUP_ID");
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Loading Spotify token... ");
+
+            var spotifyToken = await Program.GetSpotifyToken(spotifyClientId, spotifyClientSecret, spotifyRefreshToken).ConfigureAwait(false);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Authenticating with Spotify... ");
+
+            var spotifyClient = await Program.GetSpotifyClient(spotifyToken).ConfigureAwait(false);
+
+            Console.WriteLine("[Ok]");
+
+            Console.Write("Loading discover weekly songs list... ");
+
+            var discoverWeeklySongs = await Program.GetPlaylistSongs(spotifyClient, spotifyDiscoverWeeklyId).ConfigureAwait(false);
+
+            Console.WriteLine($"[Ok: {discoverWeeklySongs.Count} songs]");
+
+            Console.Write("Adding discover weekly songs to playlist... ");
+
+            await Program.AddSongsToPlaylist(spotifyClient, spotifyDiscoverWeeklyBackupId, discoverWeeklySongs);
+
+            Console.WriteLine("[Ok]");
         }
 
         private static async Task SavedSongs()
