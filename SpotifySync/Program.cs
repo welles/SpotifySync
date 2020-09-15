@@ -165,29 +165,42 @@ namespace SpotifySync
 
             Console.WriteLine($"[Ok: {addedSongs.Count} added, {removedSongs.Count} removed]");
 
-            Console.Write("Synchronizing library and playlist... ");
+            if (addedSongs.Any() || removedSongs.Any())
+            {
+                Console.Write("Synchronizing library and playlist... ");
 
-            await Program.SynchronizePlaylist(spotifyClient, spotifyPlaylistId, addedSongs, removedSongs).ConfigureAwait(false);
+                await Program.SynchronizePlaylist(spotifyClient, spotifyPlaylistId, addedSongs, removedSongs).ConfigureAwait(false);
 
-            Console.WriteLine("[Ok]");
+                Console.WriteLine("[Ok]");
 
-            Console.Write("Write added songs to spreadsheet... ");
+                if (addedSongs.Any())
+                {
+                    Console.Write("Write added songs to spreadsheet... ");
 
-            await Program.AppendAddedLog(sheetsService, addedSongs, googleSheetId).ConfigureAwait(false);
+                    await Program.AppendAddedLog(sheetsService, addedSongs, googleSheetId).ConfigureAwait(false);
 
-            Console.WriteLine("[Ok]");
+                    Console.WriteLine("[Ok]");
+                }
 
-            Console.Write("Write removed songs to spreadsheet... ");
+                if (removedSongs.Any())
+                {
+                    Console.Write("Write removed songs to spreadsheet... ");
 
-            await Program.AppendRemovedLog(sheetsService, removedSongs, googleSheetId).ConfigureAwait(false);
+                    await Program.AppendRemovedLog(sheetsService, removedSongs, googleSheetId).ConfigureAwait(false);
 
-            Console.WriteLine("[Ok]");
+                    Console.WriteLine("[Ok]");
+                }
 
-            Console.Write("Write all saved songs to spreadsheet... ");
+                Console.Write("Write all saved songs to spreadsheet... ");
 
-            await Program.UpdateCurrentSheet(sheetsService, librarySongs, googleSheetId).ConfigureAwait(false);
+                await Program.UpdateCurrentSheet(sheetsService, librarySongs, googleSheetId).ConfigureAwait(false);
 
-            Console.WriteLine("[Ok]");
+                Console.WriteLine("[Ok]");
+            }
+            else
+            {
+                Console.WriteLine("Saved songs did not change since last run!");
+            }
         }
 
         private static async Task<string> GetSpotifyToken(string spotifyClientId, string spotifyClientSecret, string spotifyRefreshToken)
