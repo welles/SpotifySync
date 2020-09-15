@@ -1,7 +1,9 @@
 name: Saved Songs
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  schedule:
+    - cron: '0,15,30,45 * * * *'
 
 jobs:
   saved_songs:

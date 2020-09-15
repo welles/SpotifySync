@@ -1,6 +1,7 @@
 ﻿name: Release Radar
 
 on:
+  workflow_dispatch:
   schedule:
     - cron:  '0 5 * * 5'
 
