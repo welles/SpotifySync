@@ -70,6 +70,8 @@ namespace SpotifySync
 
             var releaseRadarSongs = await Program.GetPlaylistSongs(spotifyClient, spotifyReleaseRadarId).ConfigureAwait(false);
 
+            releaseRadarSongs.Reverse();
+
             Console.WriteLine($"[Ok: {releaseRadarSongs.Count} songs]");
 
             Console.Write("Adding release radar songs to playlist... ");
@@ -106,6 +108,8 @@ namespace SpotifySync
             Console.Write("Loading discover weekly songs list... ");
 
             var discoverWeeklySongs = await Program.GetPlaylistSongs(spotifyClient, spotifyDiscoverWeeklyId).ConfigureAwait(false);
+
+            discoverWeeklySongs.Reverse();
 
             Console.WriteLine($"[Ok: {discoverWeeklySongs.Count} songs]");
 
@@ -205,36 +209,36 @@ namespace SpotifySync
 
         private static async Task<string> GetSpotifyToken(string spotifyClientId, string spotifyClientSecret, string spotifyRefreshToken)
         {
-            using (var client = new HttpClient())
-            using (var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token"))
+            using var client = new HttpClient();
+            using var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
+
+            var spotifyClientString = spotifyClientId + ":" + spotifyClientSecret;
+            var spotifyClientBytes = Encoding.UTF8.GetBytes(spotifyClientString);
+            var spotifyClientStringEncoded = Convert.ToBase64String(spotifyClientBytes);
+
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", spotifyClientStringEncoded);
+
+            var body = new List<KeyValuePair<string, string>>
             {
-                var spotifyClientString = spotifyClientId + ":" + spotifyClientSecret;
-                var spotifyClientBytes = Encoding.UTF8.GetBytes(spotifyClientString);
-                var spotifyClientStringEncoded = Convert.ToBase64String(spotifyClientBytes);
+                new KeyValuePair<string, string>("grant_type", "refresh_token"),
+                new KeyValuePair<string, string>("refresh_token", spotifyRefreshToken)
+            };
 
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", spotifyClientStringEncoded);
+            request.Content = new FormUrlEncodedContent(body);
 
-                var body = new List<KeyValuePair<string, string>>
-                {
-                    new KeyValuePair<string, string>("grant_type", "refresh_token"),
-                    new KeyValuePair<string, string>("refresh_token", spotifyRefreshToken)
-                };
+            var response = await client.SendAsync(request).ConfigureAwait(false);
 
-                request.Content = new FormUrlEncodedContent(body);
-
-                var response = await client.SendAsync(request).ConfigureAwait(false);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                    var token = JObject.Parse(content).Value<string>("access_token");
-
-                    return token;
-                }
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException("Could not load Spotify token.");
             }
 
-            throw new InvalidOperationException("Could not load Spotify token.");
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            var token = JObject.Parse(content).Value<string>("access_token");
+
+            return token;
+
         }
 
         private static string GetEnvironmentVariable(string key)
@@ -252,8 +256,8 @@ namespace SpotifySync
         private static async Task<SpotifyClient> GetSpotifyClient(string spotifyToken)
         {
             var config = SpotifyClientConfig.CreateDefault()
-                .WithToken(spotifyToken, "Bearer")
-                .WithRetryHandler(new SimpleRetryHandler() {RetryAfter = TimeSpan.FromSeconds(1), RetryTimes = 1});;
+                .WithToken(spotifyToken)
+                .WithRetryHandler(new SimpleRetryHandler {RetryAfter = TimeSpan.FromSeconds(1), RetryTimes = 1});
 
             var spotify = new SpotifyClient(config);
 
@@ -316,9 +320,9 @@ namespace SpotifySync
         {
             foreach (var song in songs)
             {
-                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Uri})).ConfigureAwait(false);
+                await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Uri}) {Position = 0}).ConfigureAwait(false);
 
-                await Task.Delay(1000).ConfigureAwait(false);;
+                await Task.Delay(1000).ConfigureAwait(false);
             }
         }
 
@@ -328,7 +332,7 @@ namespace SpotifySync
             {
                 await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Track.Uri}) {Position = 0}).ConfigureAwait(false);
 
-                await Task.Delay(1000).ConfigureAwait(false);;
+                await Task.Delay(1000).ConfigureAwait(false);
             }
 
             for (var index = 0; index < removedSongs.Count; index += 100)
@@ -343,22 +347,21 @@ namespace SpotifySync
 
         private static SheetsService GetSheetsService(string googleToken)
         {
-            using (var stream = googleToken.ToStream())
+            using var stream = googleToken.ToStream();
+
+            var serviceInitializer = new BaseClientService.Initializer
             {
-                var serviceInitializer = new BaseClientService.Initializer
-                {
-                    HttpClientInitializer = GoogleCredential.FromStream(stream).CreateScoped(SheetsService.Scope.Spreadsheets)
-                };
+                HttpClientInitializer = GoogleCredential.FromStream(stream).CreateScoped(SheetsService.Scope.Spreadsheets)
+            };
 
-                var service = new SheetsService(serviceInitializer);
+            var service = new SheetsService(serviceInitializer);
 
-                if (string.IsNullOrWhiteSpace(service.Name))
-                {
-                    throw new Exception("Authorization with Google failed.");
-                }
-
-                return service;
+            if (string.IsNullOrWhiteSpace(service.Name))
+            {
+                throw new Exception("Authorization with Google failed.");
             }
+
+            return service;
         }
 
         private static Stream ToStream(this string s)
