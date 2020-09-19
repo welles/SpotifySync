@@ -316,11 +316,9 @@ namespace SpotifySync
         {
             foreach (var song in songs)
             {
-                var delay = Task.Delay(1000).ConfigureAwait(false);
-
                 await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Uri})).ConfigureAwait(false);
 
-                await delay;
+                await Task.Delay(1000).ConfigureAwait(false);;
             }
         }
 
@@ -328,11 +326,9 @@ namespace SpotifySync
         {
             foreach (var song in addedSongs)
             {
-                var delay = Task.Delay(1000).ConfigureAwait(false);
-
                 await spotifyClient.Playlists.AddItems(spotifyPlaylistId, new PlaylistAddItemsRequest(new [] {song.Track.Uri}) {Position = 0}).ConfigureAwait(false);
 
-                await delay;
+                await Task.Delay(1000).ConfigureAwait(false);;
             }
 
             for (var index = 0; index < removedSongs.Count; index += 100)
