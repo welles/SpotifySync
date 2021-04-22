@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -153,7 +154,22 @@ namespace SpotifySync
 
             Console.Write("Loading library songs list... ");
 
-            var librarySongs = await Program.GetLibrarySongs(spotifyClient).ConfigureAwait(false);
+            List<SavedTrack> librarySongs;
+            try
+            {
+                librarySongs = await Program.GetLibrarySongs(spotifyClient).ConfigureAwait(false);
+            }
+            catch (APIException e)
+            {
+                if (e.Response?.StatusCode == HttpStatusCode.ServiceUnavailable)
+                {
+                    Console.WriteLine("[Spotify Service unavailable. Trying again on next run.]");
+
+                    return;
+                }
+
+                throw;
+            }
 
             Console.WriteLine($"[Ok: {librarySongs.Count} songs]");
 
