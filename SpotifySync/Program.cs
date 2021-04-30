@@ -129,6 +129,7 @@ namespace SpotifySync
             var spotifyClientSecret = Program.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET");
             var spotifyRefreshToken = Program.GetEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
             var spotifyPlaylistId = Program.GetEnvironmentVariable("SPOTIFY_PLAYLIST_ID");
+            var spotifyArchivePlaylistId = Program.GetEnvironmentVariable("SPOTIFY_ARCHIVE_PLAYLIST_ID");
             var googleToken = Program.GetEnvironmentVariable("GOOGLE_TOKEN");
             var googleSheetId = Program.GetEnvironmentVariable("GOOGLE_SHEET_ID");
 
@@ -207,6 +208,12 @@ namespace SpotifySync
                     Console.Write("Write removed songs to spreadsheet... ");
 
                     await Program.AppendRemovedLog(sheetsService, removedSongs, googleSheetId).ConfigureAwait(false);
+
+                    Console.WriteLine("[Ok]");
+
+                    Console.Write("Add removed songs to archive playlist... ");
+
+                    await Program.AddSongsToPlaylist(spotifyClient, spotifyArchivePlaylistId, removedSongs);
 
                     Console.WriteLine("[Ok]");
                 }
